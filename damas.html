@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Damas</title>
+</head>
+<script>
+
+var ns = "http://www.w3.org/2000/svg";
+var size = 120;
+var row = 8;
+var canvas;
+var duration = 500;
+
+function init() {
+	try {
+		canvas = document.getElementById('canvas');
+		if (screen.height >= 1080)
+			size = 120;
+		else
+			size = 80;
+		var pos = (screen.width / 2) - ((row * size) / 2);
+		var baseStyle = "position:absolute;left:" + pos + "px;top:10px";
+		var status = document.getElementById('status');
+		status.setAttributeNS(null, 'style',  "width:" + (pos - 10)+ "px");
+		canvas.setAttributeNS(null, 'style',  baseStyle);
+		canvas.setAttributeNS(null, 'width', row * size);
+		canvas.setAttributeNS(null, 'height', row * size);
+		buildBoard();
+		request();
+	} catch(e) {
+		document.getElementById('erros').innerHTML = e;
+	}
+}
+
+var xmlhttp = new XMLHttpRequest();
+
+function autoRequest()  {
+	if (document.getElementById('autorequest').checked)
+		request();
+}
+
+function save()  {
+	try {
+		var url = 'http://localhost:4280/save';
+		xmlhttp.onreadystatechange = function() {
+			if (xmlhttp.readyState == 4) {
+				try {
+					if (xmlhttp.status == 200) {
+						self.eval(xmlhttp.responseText);
+					} else if (xmlhttp.responseText.length > 0) {
+						document.getElementById('erros').innerHTML = xmlhttp.responseText;
+					}
+				} catch (ex) { 
+					document.getElementById('erros').innerHTML = xmlhttp.responseText + '<br><br>' + ex;
+				}
+			}
+		};
+		xmlhttp.open("GET", url, true);
+		xmlhttp.send();
+	} catch (ex) {
+		document.getElementById('erros').innerHTML = ex;
+	}
+}
+
+function undoRequest() {
+	try {
+		//TODO remover linhas e scores
+		document.getElementById("previous").disabled = true;
+		document.getElementById("next").disabled = true;
+		var elements = document.getElementsByName("deleteme");	
+		if (elements != null && elements.length > 0)
+			for (var i = 0; i < elements.length; i++)
+				if (elements[i] != null) {
+					
+					elements[i].textContent = null;
+				}
+		var url = 'http://localhost:4280/undoRequest';
+		xmlhttp.onreadystatechange = function() {
+			if (xmlhttp.readyState == 4) {
+				if (xmlhttp.status == 200) {
+					try {
+						self.eval(xmlhttp.responseText);
+						document.getElementById("previous").disabled = false;
+						document.getElementById("next").disabled = false;
+					} catch (ex) {
+						document.getElementById("previous").disabled = false;
+						document.getElementById("next").disabled = false;
+						document.getElementById('erros').innerHTML = xmlhttp.responseText + '<br><br>' + ex;
+					}
+				} else if (xmlhttp.responseText.length > 0) {
+					document.getElementById("previous").disabled = false;
+					document.getElementById("next").disabled = false;
+					document.getElementById('erros').innerHTML = xmlhttp.responseText;
+				}
+			}
+
+		};
+		xmlhttp.open("GET", url, true);
+		xmlhttp.send();
+	} catch (ex) {
+		document.getElementById('erros').innerHTML = ex;
+	}
+}
+
+function enabledButtons() {
+	if (!requesting && !document.getElementById('autorequest').checked) {
+		document.getElementById("next").disabled = false;
+		document.getElementById("previous").disabled = false;
+	}
+}
+
+var requesting = 0;
+
+function request() {
+	try {
+		requesting = 1;
+		document.getElementById("next").disabled = true;
+		document.getElementById("previous").disabled = true;
+		var elements = document.getElementsByName("deleteme");	
+		//TODO remover linhas e scores
+		if (elements != null && elements.length > 0)
+			for (var i = 0; i < elements.length; i++)
+				if (elements[i] != null) {					
+					elements[i].textContent = null;
+				}
+		var url = 'http://localhost:4280/play';
+		var query = '';
+		if (document.getElementById('autorequest').checked)
+			query = '?autorequest=1';
+		if (document.getElementById('showscore').checked)
+			if (query.length == 0)
+				query = '?showscore=1';
+			else
+				query += '&showscore=1';
+		if (document.getElementById('threads').checked)
+			if (query.length == 0)
+				query = '?threads=1';
+			else
+				query += '&threads=1';
+		if (document.getElementById('alphabeta').checked)
+			if (query.length == 0)
+				query = '?alphabeta=1';
+			else
+				query += '&alphabeta=1';
+		if (document.getElementById('ignorerepeated').checked)
+			if (query.length == 0)
+				query = '?ignorerepeated=1';
+			else
+				query += '&ignorerepeated=1';		
+		if (document.getElementById('p1').value)
+			if (query.length == 0)
+				query = '?p1=' + document.getElementById('p1').value;
+			else
+				query += '&p1=' + document.getElementById('p1').value;
+		if (document.getElementById('p2').value)
+			if (query.length == 0)
+				query = '?p2=' + document.getElementById('p2').value;
+			else
+				query += '&p2=' + document.getElementById('p2').value;
+		if (query.length > 0)
+			url += query;
+		xmlhttp.onreadystatechange = function() {
+			if (xmlhttp.readyState == 4) {
+				if (xmlhttp.status == 200) {
+					try {
+						self.eval(xmlhttp.responseText);
+						requesting = 0;
+						enabledButtons();
+					} catch (ex) {
+						requesting = 0;
+						document.getElementById("next").disabled = false;
+						document.getElementById("previous").disabled = false;
+						document.getElementById('erros').innerHTML = xmlhttp.responseText + '<br><br>' + ex;
+					}
+				} else if (xmlhttp.responseText.length > 0) {
+					requesting = 0;
+					document.getElementById("next").disabled = false;
+					document.getElementById("previous").disabled = false;
+					document.getElementById('erros').innerHTML = xmlhttp.responseText;
+				}
+			}
+
+		};
+		xmlhttp.open("GET", url, true);
+		xmlhttp.send();
+	} catch (ex) {
+		document.getElementById('erros').innerHTML = ex;
+	}
+}
+
+function buildLine(x, y, x2, y2) {
+	x *= size;
+	y *= size;
+	x2 *= size;
+	y2 *= size;
+	
+	var line = document.createElementNS(ns, "line");
+					
+	line.setAttributeNS(null, 'style',"stroke:rgb(255,0,255);stroke-width:5"); 	
+	line.setAttributeNS(null, 'x1', x + (size / 2));
+	line.setAttributeNS(null, 'y1', y + (size / 2));
+	line.setAttributeNS(null, 'x2', x + (size / 2));
+	line.setAttributeNS(null, 'y2', y + (size / 2));
+	
+	var anix = buildAnimation('x2', x + (size / 2), x2 + (size / 2));
+	var aniy = buildAnimation('y2',  y + (size / 2), y2 + (size / 2));
+	
+	line.appendChild(anix);
+	line.appendChild(aniy);
+	canvas.appendChild(line);
+	
+	anix.beginElement();
+	aniy.beginElement();
+}
+
+function buildScore(x, y, x2, y2, value, color) {
+	x *= size;
+	y *= size;
+	x2 *= size;
+	y2 *= size;
+	
+	var text = document.createElementNS(ns, "text");
+
+	if (color == null)
+		color = 'red';
+	text.setAttributeNS(null, 'style',"fill:" + color + ";stroke:black;stroke-width:0.7"); 	
+	text.setAttributeNS(null, 'font-size',"25"); 	
+	text.setAttributeNS(null, 'name',"deleteme"); 	
+	text.setAttributeNS(null, 'x', x + (x2 - x) + (x2 < x ? size / 1.5 : 0));
+	text.setAttributeNS(null, 'y', y + (y2 - y) + (y2 < y ? size + size / 3.9 : 0));
+	
+	text.textContent = value;
+	canvas.appendChild(text);
+}
+
+function buildPiece(x, y, black) {
+	x *= size;
+	y *= size;
+	
+	var ellipse = document.createElementNS(ns, "ellipse");
+	if (black == null || black == 0 || black == 2)
+		ellipse.setAttributeNS(null, 'style',"fill:rgb(255,0,0);opacity:0.8;stroke:white;stroke-width:2"); 
+	else if (black == 1 || black == 3)
+		ellipse.setAttributeNS(null, 'style',"fill:rgb(0,0,0);opacity:0.8;stroke:white;stroke-width:2"); 
+	
+	ellipse.setAttributeNS(null, 'cx', x + (size / 2));
+	ellipse.setAttributeNS(null, 'cy', y + (size / 2));
+	ellipse.setAttributeNS(null, 'rx', size / 3);
+	ellipse.setAttributeNS(null, 'ry', size / 3);
+	ellipse.setAttributeNS(null, 'id', "e" + x + "-" + y); 
+	canvas.appendChild(ellipse);
+	
+	if (black == 2 || black == 3) 
+		upgradePiece(x / size, y / size);
+}
+
+function upgradePiece(x, y, durationMult) {
+	x *= size;
+	y *= size;
+	
+	var polygon = document.createElementNS(ns, "path");
+	
+	polygon.setAttributeNS(null, 'style',"fill:gold;opacity:0.6"); 
+	polygon.setAttributeNS(null, 'id', "p" + x + "-" + y); 
+	polygon.setAttributeNS(null, 'd', getPolygonPoints(x, y));
+	canvas.appendChild(polygon);	
+	
+	if (durationMult == null)
+		durationMult = 1;
+	var anix = buildAnimation('opacity', [0,0.01,0.02,0.03,0.04,0.05,0.6]);
+	anix.setAttributeNS(null, 'dur', (duration * durationMult) + 'ms');
+	polygon.appendChild(anix);
+	anix.beginElement();
+}
+
+function getPolygonPoints(x, y) {
+	var points = 'M' + (x + (size / 3)) + " " + (y + (size / 3));
+	points += " L" + (x + (size / 2)) + " " + (y + (size / 2));
+	points += " L" + (x + (size - (size / 3))) + " " + (y + (size / 3));
+	
+	points += " L" + (x + (size - (size / 3))) + " " + (y + (size / 2) + (size / 5.5));
+	points += " L" + (x + (size / 3)) + " " + (y + (size / 2) + (size / 5.5)) + " Z";
+	return points;
+}
+
+function showScore(score, jogadas, info) {
+	var status = document.getElementById('status');
+	status.innerHTML = 'Pontua&ccedil;&atilde;o: ' + score + '<br>Qtd jogadas: ' + jogadas + '<br>' + info;
+}
+
+function movePiece(x, y) {
+	for (var i = 0; i < x.length; i++) {
+		x[i] *= size;
+		y[i] *= size;	
+	}
+	var ellipse = document.getElementById('e' + x[0] + '-' + y[0]);
+	if (ellipse == null)
+		throw 'Ellipse ' + + x[0] + ' ' + y[0] + ' is null';
+	var anix = buildAnimation('cx', x, function(value) {
+		return value + (size / 2);
+	});
+	var aniy = buildAnimation('cy', y, function(value) {
+		return value + (size / 2);
+	});
+	
+	ellipse.setAttributeNS(null, 'id', 'e' + x[x.length - 1] + '-' + y[x.length - 1]); 
+	ellipse.appendChild(anix);
+	ellipse.appendChild(aniy);
+	
+	var polygon = document.getElementById('p' + x[0] + '-' + y[0]);
+	if (polygon != null) {
+		var values = new Array();
+		for (var i = 0; i < x.length; i++) 
+			values[i] = new Array(x[i], y[i]);
+		var anip = buildAnimation('d', values, function(value) {
+			return getPolygonPoints(value[0], value[1]);
+		});
+		
+		polygon.setAttributeNS(null, 'id', "p" + x[x.length - 1] + "-" + y[x.length - 1]); 
+		polygon.appendChild(anip);
+		
+		anip.beginElement();
+	}
+	
+	anix.beginElement();
+	aniy.beginElement();
+}
+
+function buildAnimation(attribute, values, inc) {
+	var animate = document.createElementNS(ns, 'animate');
+	var valuesAtt = '';
+	for (var i = 0; i < values.length; i++) {
+		if (i > 0)
+			valuesAtt += ';';
+		if (inc)
+			valuesAtt += inc(values[i]);
+		else
+			valuesAtt += values[i];
+	}
+	animate.setAttributeNS(null, 'attributeName', attribute);
+	animate.setAttributeNS(null, 'values', valuesAtt);
+	animate.setAttributeNS(null, 'dur', (duration * (values.length - 1)) + 'ms');
+	animate.setAttributeNS(null, 'fill', 'freeze');
+	animate.setAttributeNS(null, 'begin', 'indefinite');
+	
+	return animate;
+}
+
+function removePiece(x, y, durationMult) {
+	x *= size;
+	y *= size;
+	
+	var ellipse = document.getElementById('e' + x + '-' + y);
+	ellipse.setAttributeNS(null, 'id', null); 
+	
+	if (durationMult == null || durationMult < 1)
+		durationMult = 1;
+	var opaci = new Array();
+	for (var i = 0; i < durationMult - 1; i++)
+		opaci[i] = 0.8;
+	opaci[durationMult - 1] = 0;
+	var fade = buildAnimation('opacity', opaci);
+	fade.setAttributeNS(null, 'dur', (duration * durationMult) + 'ms');
+	ellipse.appendChild(fade);
+	var polygon = document.getElementById('p' + x + '-' + y);
+	if (polygon != null) {
+		polygon.setAttributeNS(null, 'id', null); 
+		
+		opaci = new Array();
+		for (var i = 0; i < durationMult - 1; i++)
+			opaci[i] = 0.6;
+		opaci[durationMult - 1] = 0;
+		var fadeP = buildAnimation('opacity', opaci);
+		fadeP.setAttributeNS(null, 'dur', (duration * durationMult) + 'ms');
+		polygon.appendChild(fadeP);
+		
+		fadeP.beginElement();
+	}
+		
+	fade.beginElement();
+}
+
+function buildBoard() {
+	for (var y = 0; y < row; y++) {
+		for (var x = 0; x < row; x++) {
+			var rectangle = document.createElementNS(ns, "rect");
+			
+			rectangle.setAttributeNS(null, 'width', size);
+			rectangle.setAttributeNS(null, 'height', size);
+			rectangle.setAttributeNS(null, 'x', x * size);
+			rectangle.setAttributeNS(null, 'y', y * size);
+			canvas.appendChild(rectangle);
+			if (x % 2 != y % 2) {
+				rectangle.setAttributeNS(null, 'style',"fill:black;opacity:0.7"); 
+			} else {
+				rectangle.setAttributeNS(null, 'style',"fill:orange;opacity:0.5"); 
+			}
+		}
+	}
+}
+
+
+</script>
+<body onload="init()">
+<form>
+<button id="next" type="button" onclick="javascript:request()">Pr&oacute;xima jogada</button><br>
+<button id="previous" type="button" onclick="javascript:undoRequest()">Desfazer jogada</button><br>
+<button id="sav" type="button" onclick="javascript:save()">Salvar</button><br>
+<input type="checkbox" id="autorequest" onclick="javascript:enabledButtons()" value="Auto">Requisitar automaticamente<br>
+<input type="checkbox" id="showscore" value="ShowScore">Exibir pontua&ccedil;&atilde;o da jogada<br>
+<input type="checkbox" id="ignorerepeated" value="IgnoreRepeated">Ignorar jogadas repetidas<br>
+<input type="checkbox" id="alphabeta" value="AlphaBeta">Alpha Beta Pruning<br>
+<input type="checkbox" id="threads" value="Threads">Multithreading<br>
+Busca em profundidade pretas<br>
+<input type="number" id="p1" value="1"><br>
+Busca em profundidade vermelhas<br>
+<input type="number" id="p2" value="1"><br>
+</form>
+<h2 id="status">Pontua&ccedil;&atilde;o do tabuleiro: 0<br>Qtd Jogadas: 0</h2>
+<h2 id="erros" style="color:red;"></h2>
+<svg id="canvas" 
+	xmlns="http://www.w3.org/2000/svg" 
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	version="1.1" height="800" width="800" style="position:absolute" >
+</svg> 
+</body>
+</html>
