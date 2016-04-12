@@ -20,10 +20,11 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+@SuppressWarnings("restriction")
 public class WebServer {
 
 	public static void main(String[] args) throws Exception {
-		HttpServer server = HttpServer.create(new InetSocketAddress(4280), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(4280), 0);
 		server.createContext("/", new MyHandler());
 		server.setExecutor(null); // creates a default executor
 
@@ -82,8 +83,9 @@ public class WebServer {
 					respB = session.getUndo().getBytes();
 				} else if (path.startsWith("/play")) {
 					String query = requestURI.getQuery();
-					if (query == null)
-						query = "";
+					if (query == null) {
+                        query = "";
+                    }
 					boolean autoRequest = query.contains("autorequest=1");
 					boolean showScore = query.contains("showscore=1");
 					boolean ignoreRepeated = query.contains("ignorerepeated=1");
@@ -91,14 +93,18 @@ public class WebServer {
 					boolean multithreading = query.contains("threads=1");
 					int p1 = 0, p2 = 0;
 					try {
-						for (String value: query.split("&"))
-							if (value.contains("p1=") && value.indexOf('=') < value.length() - 1)
-								p1 = Integer.parseInt(value.substring(value.indexOf("=") + 1));
+						for (String value: query.split("&")) {
+                            if (value.contains("p1=") && value.indexOf('=') < value.length() - 1) {
+                                p1 = Integer.parseInt(value.substring(value.indexOf("=") + 1));
+                            }
+                        }
 					} catch (NumberFormatException e) {}
 					try {
-						for (String value: query.split("&"))
-							if (value.contains("p2=") && value.indexOf('=') < value.length() - 1)
-								p2 = Integer.parseInt(value.substring(value.indexOf("=") + 1));
+						for (String value: query.split("&")) {
+                            if (value.contains("p2=") && value.indexOf('=') < value.length() - 1) {
+                                p2 = Integer.parseInt(value.substring(value.indexOf("=") + 1));
+                            }
+                        }
 					} catch (NumberFormatException e) {}
 					respB = session.getPlay(autoRequest, showScore, ignoreRepeated, alphaBeta, multithreading, p1, p2).getBytes();
 				} else if (path.startsWith("/save")) {
@@ -108,13 +114,15 @@ public class WebServer {
 				e.printStackTrace();
 			}
 			headers.add("Content-Type", "text/html; charset=utf-8");
-			if (respB == null)
-				t.sendResponseHeaders(404, 0);
-			else
-				t.sendResponseHeaders(200, respB.length);
+			if (respB == null) {
+                t.sendResponseHeaders(404, 0);
+            } else {
+                t.sendResponseHeaders(200, respB.length);
+            }
 			OutputStream os = t.getResponseBody();
-			if (respB != null)
-				os.write(respB);
+			if (respB != null) {
+                os.write(respB);
+            }
 			os.close();
 		}
 	}
