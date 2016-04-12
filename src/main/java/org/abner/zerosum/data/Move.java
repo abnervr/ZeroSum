@@ -31,11 +31,14 @@ public class Move implements Comparable<Move>, Serializable, Cloneable {
 	public Move(Piece piece, Move parentMove, Position position) {
 		this.piece = piece.clone();
 		this.startPosition = parentMove.getStartPosition();
-		for (Position capturedPiece: parentMove.getCapturedPositions())
-			addCapturedPosition(capturedPiece);
-		if (parentMove.getPositions() != null)
-			for (Position oldPosition: parentMove.getPositions())
-				addPosition(oldPosition);
+		for (Position capturedPiece: parentMove.getCapturedPositions()) {
+            addCapturedPosition(capturedPiece);
+        }
+		if (parentMove.getPositions() != null) {
+            for (Position oldPosition: parentMove.getPositions()) {
+                addPosition(oldPosition);
+            }
+        }
 		setPosition(position);
 	}
 
@@ -56,20 +59,24 @@ public class Move implements Comparable<Move>, Serializable, Cloneable {
 	}
 
 	public void setPosition(Position position) {
-		if (this.position != null)
-			addPosition(this.position);
+		if (this.position != null) {
+            addPosition(this.position);
+        }
 		this.position = position;
 		if (piece instanceof CheckersPiece && !((CheckersPiece)piece).isQueen()) {
-			if (piece.isBlack() && position.getY() == Board.BOARD_SIZE - 1)
-				queenMove = true;
-			if (!piece.isBlack() && position.getY() == 0)
-				queenMove = true;
+			if (piece.isBlack() && position.getY() == Board.BOARD_SIZE - 1) {
+                queenMove = true;
+            }
+			if (!piece.isBlack() && position.getY() == 0) {
+                queenMove = true;
+            }
 		}
 	}
 
 	public void addCapturedPosition(Position position) {
-		if (capturedPositions == null)
-			capturedPositions = new ArrayList<Position>();
+		if (capturedPositions == null) {
+            capturedPositions = new ArrayList<Position>();
+        }
 		capturedPositions.add(position);
 	}
 
@@ -82,8 +89,9 @@ public class Move implements Comparable<Move>, Serializable, Cloneable {
 	}
 
 	public void addCapturedPiece(Piece remove) {
-		if (capturedPieces == null)
-			capturedPieces = new ArrayList<Piece>();
+		if (capturedPieces == null) {
+            capturedPieces = new ArrayList<Piece>();
+        }
 		capturedPieces.add(remove);
 	}
 
@@ -92,8 +100,9 @@ public class Move implements Comparable<Move>, Serializable, Cloneable {
 	}
 
 	public void addPosition(Position oldPosition) {
-		if (positions == null)
-			positions = new ArrayList<Position>();
+		if (positions == null) {
+            positions = new ArrayList<Position>();
+        }
 		positions.add(oldPosition);
 	}
 
@@ -102,25 +111,28 @@ public class Move implements Comparable<Move>, Serializable, Cloneable {
 	}
 
 	public int getCaptured() {
-		if (capturedPositions == null)
-			return 0;
+		if (capturedPositions == null) {
+            return 0;
+        }
 		return capturedPositions.size();
 	}
-
-	@Override
+	
 	public int compareTo(Move o) {
 		if (capturedPositions == null && o.capturedPositions == null) {
-			if (isQueenMove() && o.isQueenMove())
-				return 0;
-			else if (isQueenMove())
-				return -1;
-			else
-				return 1;
+			if (isQueenMove() && o.isQueenMove()) {
+                return 0;
+            } else if (isQueenMove()) {
+                return -1;
+            } else {
+                return 1;
+            }
 		}
-		if (capturedPositions == null)
-			return 1;
-		if (o.capturedPositions == null)
-			return -1;
+		if (capturedPositions == null) {
+            return 1;
+        }
+		if (o.capturedPositions == null) {
+            return -1;
+        }
 		return o.capturedPositions.size() - capturedPositions.size();
 	}
 
@@ -145,45 +157,61 @@ public class Move implements Comparable<Move>, Serializable, Cloneable {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
+		if (this == obj) {
+            return true;
+        }
+		if (obj == null) {
+            return false;
+        }
+		if (getClass() != obj.getClass()) {
+            return false;
+        }
 		Move other = (Move)obj;
 		if (capturedPieces == null) {
-			if (other.capturedPieces != null)
-				return false;
-		} else if (!capturedPieces.equals(other.capturedPieces))
-			return false;
+			if (other.capturedPieces != null) {
+                return false;
+            }
+		} else if (!capturedPieces.equals(other.capturedPieces)) {
+            return false;
+        }
 		if (capturedPositions == null) {
-			if (other.capturedPositions != null)
-				return false;
-		} else if (!capturedPositions.equals(other.capturedPositions))
-			return false;
+			if (other.capturedPositions != null) {
+                return false;
+            }
+		} else if (!capturedPositions.equals(other.capturedPositions)) {
+            return false;
+        }
 		if (piece == null) {
-			if (other.piece != null)
-				return false;
-		} else if (!piece.equals(other.piece))
-			return false;
+			if (other.piece != null) {
+                return false;
+            }
+		} else if (!piece.equals(other.piece)) {
+            return false;
+        }
 		if (position == null) {
-			if (other.position != null)
-				return false;
-		} else if (!position.equals(other.position))
-			return false;
+			if (other.position != null) {
+                return false;
+            }
+		} else if (!position.equals(other.position)) {
+            return false;
+        }
 		if (positions == null) {
-			if (other.positions != null)
-				return false;
-		} else if (!positions.equals(other.positions))
-			return false;
-		if (queenMove != other.queenMove)
-			return false;
+			if (other.positions != null) {
+                return false;
+            }
+		} else if (!positions.equals(other.positions)) {
+            return false;
+        }
+		if (queenMove != other.queenMove) {
+            return false;
+        }
 		if (startPosition == null) {
-			if (other.startPosition != null)
-				return false;
-		} else if (!startPosition.equals(other.startPosition))
-			return false;
+			if (other.startPosition != null) {
+                return false;
+            }
+		} else if (!startPosition.equals(other.startPosition)) {
+            return false;
+        }
 		return true;
 	}
 
@@ -191,14 +219,17 @@ public class Move implements Comparable<Move>, Serializable, Cloneable {
 	public Move clone() {
 		Move move = new Move(piece, startPosition, position);
 		move.queenMove = queenMove;
-		if (positions != null)
-			move.positions = new ArrayList<Position>(positions);
-		if (capturedPositions != null)
-			move.capturedPositions = new ArrayList<Position>(capturedPositions);
+		if (positions != null) {
+            move.positions = new ArrayList<Position>(positions);
+        }
+		if (capturedPositions != null) {
+            move.capturedPositions = new ArrayList<Position>(capturedPositions);
+        }
 		if (capturedPieces != null) {
 			move.capturedPieces = new ArrayList<Piece>();
-			for (Piece piece: capturedPieces)
-				move.capturedPieces.add(piece.clone());
+			for (Piece piece: capturedPieces) {
+                move.capturedPieces.add(piece.clone());
+            }
 		}
 		return move;
 	}

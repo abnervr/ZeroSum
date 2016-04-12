@@ -37,13 +37,17 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 	private List<Move> availableMoves;
 
 	public CheckersBoard() {
-		for (short x = 0; x < BOARD_SIZE; x++)
-			for (short y = 0; y < BOARD_SIZE; y++)
-				if (x % 2 != y % 2)
-					if (y < BOARD_SIZE / 2 - 1)
-						pieces.put(new Position(x, y), new CheckersPiece(true));
-					else if (y > BOARD_SIZE / 2)
-						pieces.put(new Position(x, y), new CheckersPiece(false));
+		for (short x = 0; x < BOARD_SIZE; x++) {
+            for (short y = 0; y < BOARD_SIZE; y++) {
+                if (x % 2 != y % 2) {
+                    if (y < BOARD_SIZE / 2 - 1) {
+                        pieces.put(new Position(x, y), new CheckersPiece(true));
+                    } else if (y > BOARD_SIZE / 2) {
+                        pieces.put(new Position(x, y), new CheckersPiece(false));
+                    }
+                }
+            }
+        }
 	}
 
 	public static CheckersBoard loadFromFile(String filename) throws FileNotFoundException, IOException, ClassNotFoundException {
@@ -52,8 +56,9 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 			ObjectInputStream input = new ObjectInputStream(new FileInputStream(file));
 			try {
 				Object object = input.readObject();
-				if (object instanceof CheckersBoard)
-					return (CheckersBoard)object;
+				if (object instanceof CheckersBoard) {
+                    return (CheckersBoard)object;
+                }
 			} finally {
 				input.close();
 			}
@@ -80,11 +85,11 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 		List<Position> keys = new ArrayList<Position>(pieces.keySet());
 		Collections.sort(keys, new Comparator<Position>() {
 
-			@Override
 			public int compare(Position o1, Position o2) {
 				int c = o1.getX() - o2.getX();
-				if (c != 0)
-					return c;
+				if (c != 0) {
+                    return c;
+                }
 				return o1.getY() - o2.getY();
 			}
 		});
@@ -92,10 +97,12 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 			CheckersPiece piece = pieces.get(position);
 			int pieceHash = (short)(position.getX() + 1);
 			pieceHash |= (position.getY() + 1) << 4;
-			if (piece.isBlack())
-				pieceHash |= 0x100;
-			if (piece.isQueen())
-				pieceHash |= 0x200;
+			if (piece.isBlack()) {
+                pieceHash |= 0x100;
+            }
+			if (piece.isQueen()) {
+                pieceHash |= 0x200;
+            }
 			hash.append(Integer.toString(pieceHash, Character.MAX_RADIX));
 		}
 		return hash.toString();
@@ -127,21 +134,24 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 		int value = 0;
 		boolean blackCheckersPieces = false, whiteCheckersPieces = false;
 		Set<Position> capturedPieces = new HashSet<Position>();
-		if (!availableMoves.isEmpty() && availableMoves.get(0).getCaptured() > 0)
-			for (Move move: availableMoves)
-				capturedPieces.addAll(move.getCapturedPositions());
+		if (!availableMoves.isEmpty() && availableMoves.get(0).getCaptured() > 0) {
+            for (Move move: availableMoves) {
+                capturedPieces.addAll(move.getCapturedPositions());
+            }
+        }
 		for (Entry<Position, CheckersPiece> e: pieces.entrySet()) {
 			CheckersPiece piece = e.getValue();
-			if (piece.isBlack())
-				blackCheckersPieces = true;
-			else
-				whiteCheckersPieces = true;
+			if (piece.isBlack()) {
+                blackCheckersPieces = true;
+            } else {
+                whiteCheckersPieces = true;
+            }
 
 			int y = e.getKey().getY();
 			int pieceValue;
-			if (piece.isQueen())
-				pieceValue = QUEEN_PIECE_VALUE;
-			else {
+			if (piece.isQueen()) {
+                pieceValue = QUEEN_PIECE_VALUE;
+            } else {
 				pieceValue = NORMAL_PIECE_VALUE;
 				if (piece.isBlack()) {
 					pieceValue += y * NORMAL_PIECE_POSITION;
@@ -149,24 +159,29 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 					pieceValue += (Board.BOARD_SIZE - 1 - y) * NORMAL_PIECE_POSITION;
 				}
 			}
-			if (capturedPieces.contains(e.getKey()))
-				pieceValue -= CAPTURE_PENALTY;
-			if (!piece.isBlack())
-				pieceValue = -pieceValue;
+			if (capturedPieces.contains(e.getKey())) {
+                pieceValue -= CAPTURE_PENALTY;
+            }
+			if (!piece.isBlack()) {
+                pieceValue = -pieceValue;
+            }
 			value += pieceValue;
 		}
 		//Acabaram as pecas, o jogo acabou
-		if (!whiteCheckersPieces)
-			return MAX_VALUE + Math.max(1000 - getQtdMoves(), 0);
-		if (!blackCheckersPieces)
-			return -(MAX_VALUE + Math.max(1000 - getQtdMoves(), 0));
+		if (!whiteCheckersPieces) {
+            return MAX_VALUE + Math.max(1000 - getQtdMoves(), 0);
+        }
+		if (!blackCheckersPieces) {
+            return -(MAX_VALUE + Math.max(1000 - getQtdMoves(), 0));
+        }
 
 		//Nao existem jogadas disponiveis, o jogo acabou
 		if (availableMoves.isEmpty()) {
-			if (isBlackMove())
-				return -(MAX_VALUE + Math.max(1000 - getQtdMoves(), 0));
-			else
-				return MAX_VALUE + Math.max(1000 - getQtdMoves(), 0);
+			if (isBlackMove()) {
+                return -(MAX_VALUE + Math.max(1000 - getQtdMoves(), 0));
+            } else {
+                return MAX_VALUE + Math.max(1000 - getQtdMoves(), 0);
+            }
 		}
 		return value;
 	}
@@ -178,8 +193,9 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 
 			for (Entry<Position, CheckersPiece> e: pieces.entrySet()) {
 				CheckersPiece piece = e.getValue();
-				if (isBlackMove() == piece.isBlack())
-					moves.addAll(getAvailableMoves(e.getKey(), piece));
+				if (isBlackMove() == piece.isBlack()) {
+                    moves.addAll(getAvailableMoves(e.getKey(), piece));
+                }
 			}
 			Collections.sort(moves);
 			if (!moves.isEmpty()) {
@@ -187,10 +203,11 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 				if (killed > 0) {
 					int i = 1;
 					while (i < moves.size()) {
-						if (moves.get(i).getCaptured() < killed)
-							moves.remove(i);
-						else
-							i++;
+						if (moves.get(i).getCaptured() < killed) {
+                            moves.remove(i);
+                        } else {
+                            i++;
+                        }
 					}
 				}
 			}
@@ -202,8 +219,9 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 	private List<Move> getAvailableMoves(Position position, CheckersPiece piece) {
 		List<Move> moves = new ArrayList<Move>();
 		int max = 1;
-		if (piece.isQueen())
-			max = BOARD_SIZE;
+		if (piece.isQueen()) {
+            max = BOARD_SIZE;
+        }
 		if (piece.isBlack() || piece.isQueen()) {
 			moves.addAll(getAvailableMoves(position, piece, (short)1, (short)1, max));
 			moves.addAll(getAvailableMoves(position, piece, (short)-1, (short)1, max));
@@ -223,12 +241,13 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 		List<Move> moves = new ArrayList<Move>();
 		for (short i = 1; i <= max; i++) {
 			Position position = new Position(currentPosition.getX() + i * xSignal, currentPosition.getY() + i * ySignal);
-			if (!position.isValid() || (pieces.containsKey(position) && pieces.get(position).isBlack() == piece.isBlack()))
-				break;
-			if (parentMove == null && !pieces.containsKey(position))
-				//Jogada comum
+			if (!position.isValid() || (pieces.containsKey(position) && pieces.get(position).isBlack() == piece.isBlack())) {
+                break;
+            }
+			if (parentMove == null && !pieces.containsKey(position)) {
+                //Jogada comum
 				moves.add(new Move(piece, currentPosition, position));
-			else if (pieces.containsKey(position) && pieces.get(position).isBlack() != piece.isBlack() && (parentMove == null || !parentMove.containsCapturedPosition(position))) {
+            } else if (pieces.containsKey(position) && pieces.get(position).isBlack() != piece.isBlack() && (parentMove == null || !parentMove.containsCapturedPosition(position))) {
 				//Comendo uma peça
 				i++;
 				Position newPosition = new Position(currentPosition.getX() + i * xSignal, currentPosition.getY() + i * ySignal);
@@ -237,9 +256,9 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 					//Não sei se é válido, tem tantas variações de regras
 					//|| (parentMove != null && parentMove.containsCapturedPosition(newPosition))) {
 					Move move;
-					if (parentMove == null)
-						move = new Move(piece, currentPosition, newPosition);
-					else {
+					if (parentMove == null) {
+                        move = new Move(piece, currentPosition, newPosition);
+                    } else {
 						move = new Move(piece, parentMove, newPosition);
 						move.addPosition(currentPosition);
 					}
@@ -263,8 +282,9 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 							}
 						}
 					}
-					if (moves.size() == size)
-						moves.add(move);
+					if (moves.size() == size) {
+                        moves.add(move);
+                    }
 
 				}
 				break;
@@ -277,16 +297,18 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 	public void doMove(Move move) {
 		availableMoves = null;
 		super.doMove(move);
-		if (move.isQueenMove())
-			pieces.get(move.getPosition()).setQueen(true);
+		if (move.isQueenMove()) {
+            pieces.get(move.getPosition()).setQueen(true);
+        }
 	}
 
 	@Override
 	public Move undoMove() {
 		availableMoves = null;
 		Move move = super.undoMove();
-		if (move != null && move.isQueenMove())
-			pieces.get(move.getStartPosition()).setQueen(false);
+		if (move != null && move.isQueenMove()) {
+            pieces.get(move.getStartPosition()).setQueen(false);
+        }
 		return move;
 	}
 
@@ -294,11 +316,13 @@ public class CheckersBoard extends Board<CheckersPiece> implements Serializable 
 	public Board<? extends Piece> clone() {
 		CheckersBoard board = new CheckersBoard();
 		board.pieces = new HashMap<Position, CheckersPiece>();
-		for (Entry<Position, CheckersPiece> e: pieces.entrySet())
-			board.pieces.put(e.getKey(), (CheckersPiece)e.getValue().clone());
+		for (Entry<Position, CheckersPiece> e: pieces.entrySet()) {
+            board.pieces.put(e.getKey(), (CheckersPiece)e.getValue().clone());
+        }
 		board.moves = new ArrayList<Move>();
-		for (Move move: moves)
-			board.moves.add(move.clone());
+		for (Move move: moves) {
+            board.moves.add(move.clone());
+        }
 		board.isBlackMove = isBlackMove();
 		board.qtdMoves = getQtdMoves();
 		board.availableMoves = null;
